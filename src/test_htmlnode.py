@@ -1,5 +1,5 @@
 import unittest
-from htmlnode import HTMLNode
+from htmlnode import HTMLNode, LeafNode
 
 
 class TestHTMLNode(unittest.TestCase):
@@ -15,6 +15,14 @@ class TestHTMLNode(unittest.TestCase):
     def test_node_with_props(self):
         node = HTMLNode("a", "This is a link", props={"href": "https://example.com"})
         self.assertEqual(node.props_to_html(), ' href="https://example.com"')
+
+    def test_leaf_to_html_p(self):
+        node = LeafNode("p", "Hello, world!")
+        self.assertEqual(node.to_html(), "<p>Hello, world!</p>")
+
+    def test_leaf_to_html_a(self):
+            node = LeafNode("a", "Hello, world!", props={"href": "https://example.com"})
+            self.assertEqual(node.to_html(), '<a href="https://example.com">Hello, world!</a>')
 
 if __name__ == "__main__":
     unittest.main()
