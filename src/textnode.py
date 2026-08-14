@@ -4,7 +4,7 @@ from typing import Set, Union
 from htmlnode import LeafNode
 
 class TextType(Enum):
-  PLAIN="text"
+  TEXT="text"
   BOLD="bold"
   ITALIC="italic"
   CODE="code"
@@ -31,7 +31,7 @@ class TextNode():
 def text_node_to_html_node(text_node: 'TextNode') -> LeafNode:
   if not isinstance(text_node.text_type, TextType):
     raise ValueError(f"Invalid text type: {text_node.text_type}")
-  if text_node.text_type == TextType.PLAIN:
+  if text_node.text_type == TextType.TEXT:
     return LeafNode(tag=None, value=text_node.text)
   elif text_node.text_type == TextType.BOLD:
     return LeafNode(tag="b", value=text_node.text)
