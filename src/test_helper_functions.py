@@ -1,5 +1,5 @@
 import unittest
-from helper_functions import split_nodes_delimiter
+from helper_functions import split_nodes_delimiter, extract_markdown_images, extract_markdown_links
 from textnode import TextNode, TextType
 
 class TestHelperFunctions(unittest.TestCase):
@@ -30,6 +30,18 @@ class TestHelperFunctions(unittest.TestCase):
     self.assertEqual(new_nodes[0].text, "This contains a ")
     self.assertEqual(new_nodes[1].text, "bold")
     self.assertEqual(new_nodes[2].text, " text node")
+
+  def test_extract_markdown_images(self):
+    matches = extract_markdown_images(
+        "This is text with an ![image](https://i.imgur.com/zjjcJKZ.png)"
+    )
+    self.assertListEqual([("image", "https://i.imgur.com/zjjcJKZ.png")], matches)
+
+  def test_extract_markdown_links(self):
+      matches = extract_markdown_links(
+          "This is text with a link [example url](https://example.com)"
+      )
+      self.assertListEqual([("example url", "https://example.com")], matches)
 
 if __name__ == "__main__":
   unittest.main()
