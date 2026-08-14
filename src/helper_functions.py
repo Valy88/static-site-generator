@@ -6,14 +6,17 @@ import re
 def split_nodes_delimiter(old_nodes: List[TextNode], delimiter: str, text_type: TextType) -> List[TextNode]:
   new_nodes: List[TextNode] = []
   for node in old_nodes:
-    if node.text_type != text_type:
+    if node.text_type != TextType.TEXT:
       new_nodes.append(node)
       continue
     split_texts = node.text.split(delimiter)
     if len(split_texts) % 2 == 0:
       raise ValueError(f"Delimiter '{delimiter}' must be used in pairs for text type '{text_type.value}'")
-    for split_text in split_texts:
-      new_nodes.append(TextNode(split_text, text_type))
+    for i, split_text in enumerate(split_texts):
+      if len(split_text) == 0:
+        continue
+      current_text_type = text_type if i % 2 == 1 else TextType.TEXT
+      new_nodes.append(TextNode(split_text, current_text_type))
   return new_nodes
 
 def extract_markdown_images(text: str) -> List[tuple]:
@@ -71,3 +74,11 @@ def split_nodes_link(old_nodes: List[TextNode]) -> List[TextNode]:
       else:
         new_nodes.append(TextNode(split_item, TextType.TEXT))
   return new_nodes
+
+def text_to_textnodes(text):
+  text_nodes = [TextNode(text, TextType.TEXT)]
+  text_nodes = split_nodes_delimiter(text_nodes, '**', TextType.BOLD)
+  text_nodes = split_nodes_delimiter(text_nodes, '_', TextType.ITALIC)
+  text_nodes = split_nodes_delimiter(text_nodes, '`', TextType.CODE)
+  text_nodes = split_nodes_link(text_nodes)
+  return split_nodes_image(text_nodes)
