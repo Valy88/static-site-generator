@@ -1,5 +1,5 @@
 import unittest
-from helper_functions import split_nodes_delimiter, extract_markdown_images, extract_markdown_links, split_nodes_image, split_nodes_link, text_to_textnodes, markdown_to_blocks
+from helper_functions import split_nodes_delimiter, extract_markdown_images, extract_markdown_links, split_nodes_image, split_nodes_link, text_to_textnodes, markdown_to_blocks, block_to_block_type, BlockType
 from textnode import TextNode, TextType
 
 class TestHelperFunctions(unittest.TestCase):
@@ -113,6 +113,16 @@ class TestHelperFunctions(unittest.TestCase):
             "- This is a list\n- with items",
         ],
     )
+
+  def test_block_to_block_type_ol(self):
+    md = """
+    1. First line
+    2. Second line
+    3. Third line
+    """
+    md_blocks = markdown_to_blocks(md)
+    block_type = block_to_block_type(md_blocks[0])
+    self.assertAlmostEqual(block_type, BlockType.OLIST)
 
 if __name__ == "__main__":
   unittest.main()
