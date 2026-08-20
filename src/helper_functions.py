@@ -1,5 +1,7 @@
-from textnode import TextNode, TextType
+from textnode import TextNode, TextType, text_node_to_html_node
+from htmlnode import LeafNode, ParentNode
 from typing import List
+
 from enum import Enum
 
 import re
@@ -84,7 +86,7 @@ def split_nodes_link(old_nodes: List[TextNode]) -> List[TextNode]:
         new_nodes.append(TextNode(split_item, TextType.TEXT))
   return new_nodes
 
-def text_to_textnodes(text):
+def text_to_textnodes(text: str) -> List[TextNode]:
   text_nodes = [TextNode(text, TextType.TEXT)]
   text_nodes = split_nodes_delimiter(text_nodes, '**', TextType.BOLD)
   text_nodes = split_nodes_delimiter(text_nodes, '_', TextType.ITALIC)
@@ -118,3 +120,42 @@ def block_to_block_type (markdown: str) -> BlockType:
   if valid:
     return BlockType.OLIST
   return BlockType.PARAGRAPH
+
+def block_type_to_tag(markdown_block: str, block_type: BlockType) -> str:
+  if block_type == BlockType.HEADING:
+    return f"h{markdown_block.split()[0].count('#')}"
+  if block_type == BlockType.CODE:
+    return "code"
+  if block_type == BlockType.QUOTE:
+    return "blockquote"
+  if block_type == BlockType.ULIST:
+    return "ul"
+  if block_type == BlockType.OLIST:
+    return "ol"
+  return "p"
+
+def text_to_children(text: str) -> List[LeafNode]:
+  text_nodes = text_to_textnodes(text)
+  children = []
+  for text_node in text_nodes:
+    children.append(text_node_to_html_node(text_node))
+  return children
+
+def markdown_to_html_node(markdown: str):
+  markdown_blocks = markdown_to_blocks(markdown)
+  html_nodes = []
+  for markdown_block in markdown_blocks:
+    block_type = block_to_block_type(markdown_block)
+    if (block_type == BlockType.CODE):
+      code_lines = markdown_block.splitlines()
+      code_text = "\n".join(code_lines[1:-1]) + "\n"
+      code_text_node = TextNode(code_text, TextType.CODE)
+      code_html_node = text_node_to_html_node(code_text_node)
+      html_node = ParentNode("pre", [code_html_node])
+    else:
+      markdown_block = markdown_block.replace("\n", " ")
+      tag = block_type_to_tag(markdown_block, block_type)
+      children = text_to_children(markdown_block)
+      html_node = ParentNode(tag, children)
+    html_nodes.append(html_node)
+  return ParentNode("div", html_nodes)
