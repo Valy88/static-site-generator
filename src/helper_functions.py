@@ -5,6 +5,8 @@ from typing import List
 from enum import Enum
 
 import re
+import os
+import shutil
 
 class BlockType(Enum):
   PARAGRAPH="paragraph"
@@ -130,20 +132,20 @@ def markdown_to_html_node(markdown: str):
   return ParentNode("div", html_nodes)
 
 def block_to_html_node(block: str) -> ParentNode:
-    block_type = block_to_block_type(block)
-    if block_type == BlockType.PARAGRAPH:
-        return paragraph_to_html_node(block)
-    if block_type == BlockType.HEADING:
-        return heading_to_html_node(block)
-    if block_type == BlockType.CODE:
-        return code_to_html_node(block)
-    if block_type == BlockType.OLIST:
-        return olist_to_html_node(block)
-    if block_type == BlockType.ULIST:
-        return ulist_to_html_node(block)
-    if block_type == BlockType.QUOTE:
-        return quote_to_html_node(block)
-    raise ValueError("invalid block type")
+  block_type = block_to_block_type(block)
+  if block_type == BlockType.PARAGRAPH:
+    return paragraph_to_html_node(block)
+  if block_type == BlockType.HEADING:
+    return heading_to_html_node(block)
+  if block_type == BlockType.CODE:
+    return code_to_html_node(block)
+  if block_type == BlockType.OLIST:
+    return olist_to_html_node(block)
+  if block_type == BlockType.ULIST:
+    return ulist_to_html_node(block)
+  if block_type == BlockType.QUOTE:
+    return quote_to_html_node(block)
+  raise ValueError("invalid block type")
 
 def text_to_children(text: str) -> List[LeafNode]:
   text_nodes = text_to_textnodes(text)
@@ -153,64 +155,99 @@ def text_to_children(text: str) -> List[LeafNode]:
   return children
 
 def paragraph_to_html_node(block: str) -> ParentNode:
-    lines = block.split("\n")
-    paragraph = " ".join(lines)
-    children = text_to_children(paragraph)
-    return ParentNode("p", children)
+  lines = block.split("\n")
+  paragraph = " ".join(lines)
+  children = text_to_children(paragraph)
+  return ParentNode("p", children)
 
 
 def heading_to_html_node(block: str) -> ParentNode:
-    level = 0
-    for char in block:
-        if char == "#":
-            level += 1
-        else:
-            break
-    if level + 1 >= len(block):
-        raise ValueError(f"invalid heading level: {level}")
-    text = block[level + 1 :]
-    children = text_to_children(text)
-    return ParentNode(f"h{level}", children)
+  level = 0
+  for char in block:
+    if char == "#":
+      level += 1
+    else:
+      break
+  if level + 1 >= len(block):
+    raise ValueError(f"invalid heading level: {level}")
+  text = block[level + 1 :]
+  children = text_to_children(text)
+  return ParentNode(f"h{level}", children)
 
 
 def code_to_html_node(block: str) -> ParentNode:
-    if not block.startswith("```") or not block.endswith("```"):
-        raise ValueError("invalid code block")
-    text = block[4:-3]
-    raw_text_node = TextNode(text, TextType.TEXT)
-    child = text_node_to_html_node(raw_text_node)
-    code = ParentNode("code", [child])
-    return ParentNode("pre", [code])
+  if not block.startswith("```") or not block.endswith("```"):
+    raise ValueError("invalid code block")
+  text = block[4:-3]
+  raw_text_node = TextNode(text, TextType.TEXT)
+  child = text_node_to_html_node(raw_text_node)
+  code = ParentNode("code", [child])
+  return ParentNode("pre", [code])
 
 
 def olist_to_html_node(block: str) -> ParentNode:
-    items = block.split("\n")
-    html_items = []
-    for item in items:
-        parts = item.split(". ", 1)
-        text = parts[1]
-        children = text_to_children(text)
-        html_items.append(ParentNode("li", children))
-    return ParentNode("ol", html_items)
+  items = block.split("\n")
+  html_items = []
+  for item in items:
+    parts = item.split(". ", 1)
+    text = parts[1]
+    children = text_to_children(text)
+    html_items.append(ParentNode("li", children))
+  return ParentNode("ol", html_items)
 
 
 def ulist_to_html_node(block: str) -> ParentNode:
-    items = block.split("\n")
-    html_items = []
-    for item in items:
-        text = item[2:]
-        children = text_to_children(text)
-        html_items.append(ParentNode("li", children))
-    return ParentNode("ul", html_items)
+  items = block.split("\n")
+  html_items = []
+  for item in items:
+    text = item[2:]
+    children = text_to_children(text)
+    html_items.append(ParentNode("li", children))
+  return ParentNode("ul", html_items)
 
 
 def quote_to_html_node(block: str) -> ParentNode:
-    lines = block.split("\n")
-    new_lines = []
-    for line in lines:
-        if not line.startswith(">"):
-            raise ValueError("invalid quote block")
-        new_lines.append(line.lstrip(">").strip())
-    content = " ".join(new_lines)
-    children = text_to_children(content)
-    return ParentNode("blockquote", children)
+  lines = block.split("\n")
+  new_lines = []
+  for line in lines:
+    if not line.startswith(">"):
+      raise ValueError("invalid quote block")
+    new_lines.append(line.lstrip(">").strip())
+  content = " ".join(new_lines)
+  children = text_to_children(content)
+  return ParentNode("blockquote", children)
+
+def copy_static_to_public():
+  base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+  public_dir = os.path.join(base_dir, "public")
+  static_dir = os.path.join(base_dir, "static")
+  for item in os.listdir(public_dir):
+    item_path = os.path.join(public_dir, item)
+    if not os.path.exists(item_path):
+      continue
+    if os.path.isfile(item_path):
+      os.unlink(item_path)
+    elif (os.path.isdir(item_path)):
+      shutil.rmtree(item_path)
+  def copy_static(static_items_list):
+    if not static_items_list:
+      return
+    static_item = static_items_list[0]
+    static_item_path = os.path.join(static_dir, static_item)
+    if os.path.exists(static_item_path):
+      if os.path.isfile(static_item_path):
+        head, tail = os.path.split(static_item)
+        copy_path = shutil.copy(static_item_path, os.path.join(public_dir, head))
+        print(f"copied {static_item_path} into {copy_path}")
+      else:
+        dir_path = os.path.join(public_dir, static_item)
+        os.mkdir(dir_path)
+        print(f"created dir {dir_path}")
+        dir_contents = os.listdir(static_item_path)
+        dir_file_paths = []
+        for dir_content in dir_contents:
+          dir_file_paths.append(os.path.join(static_item, dir_content))
+        copy_static(dir_file_paths)
+    copy_static(static_items_list[1:])
+
+  return copy_static(os.listdir(static_dir))
