@@ -217,10 +217,7 @@ def quote_to_html_node(block: str) -> ParentNode:
   children = text_to_children(content)
   return ParentNode("blockquote", children)
 
-def copy_static_to_public():
-  base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-  public_dir = os.path.join(base_dir, "public")
-  static_dir = os.path.join(base_dir, "static")
+def empty_public(public_dir: str) -> None:
   for item in os.listdir(public_dir):
     item_path = os.path.join(public_dir, item)
     if not os.path.exists(item_path):
@@ -229,6 +226,12 @@ def copy_static_to_public():
       os.unlink(item_path)
     elif (os.path.isdir(item_path)):
       shutil.rmtree(item_path)
+
+def copy_static_to_public() -> None:
+  base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+  public_dir = os.path.join(base_dir, "public")
+  static_dir = os.path.join(base_dir, "static")
+  empty_public(public_dir)
   def copy_static(static_items_list):
     if not static_items_list:
       return
