@@ -1,5 +1,5 @@
 import unittest
-from helper_functions import split_nodes_delimiter, extract_markdown_images, extract_markdown_links, split_nodes_image, split_nodes_link, text_to_textnodes, markdown_to_blocks, block_to_block_type, BlockType, markdown_to_html_node
+from helper_functions import split_nodes_delimiter, extract_markdown_images, extract_markdown_links, split_nodes_image, split_nodes_link, text_to_textnodes, markdown_to_blocks, block_to_block_type, BlockType, markdown_to_html_node, extract_title
 from textnode import TextNode, TextType
 
 class TestHelperFunctions(unittest.TestCase):
@@ -155,6 +155,38 @@ class TestHelperFunctions(unittest.TestCase):
     self.assertEqual(
         html,
         "<div><pre><code>This is text that _should_ remain\nthe **same** even with inline stuff\n</code></pre></div>",
+    )
+
+  def test_extract_title_heading(self):
+    md = """
+      This is some random text
+      # This is the title from the heading
+      ## This is a second heading which should not register
+      Another paragraph of random text
+    """
+
+    title = extract_title(md)
+    self.assertEqual(
+      title,
+      "This is the title from the heading"
+    )
+
+  def test_extract_title_exception(self):
+    md = """
+      This is some random text
+      Another paragraph of random text
+
+      No h1 heading present in this one
+
+      ### Some h3 heading just for kicks
+    """
+
+    with self.assertRaises(Exception) as context:
+      extract_title(md)
+
+    self.assertEqual(
+      str(context.exception),
+      "There is not h1 header to extract title from"
     )
 
 if __name__ == "__main__":

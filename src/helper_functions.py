@@ -110,7 +110,7 @@ def block_to_block_type (markdown: str) -> BlockType:
     return BlockType.HEADING
   if re.fullmatch(r"^```\n(.+\n)+```$", markdown) != None:
     return BlockType.CODE
-  if re.fullmatch(r"^>\s?.+$", markdown) != None:
+  if re.fullmatch(r"^>\s?.+(?:\n>\s?.+)*$", markdown):
     return BlockType.QUOTE
   if re.fullmatch(r"^(?:-\s.+(?:\n|$))+", markdown) != None:
     return BlockType.ULIST
@@ -254,3 +254,45 @@ def copy_static_to_public() -> None:
     copy_static(static_items_list[1:])
 
   return copy_static(os.listdir(static_dir))
+
+def extract_title(markdown: str) -> str:
+  markdown_blocks = markdown_to_blocks(markdown)
+  title = ""
+  for markdown_block in markdown_blocks:
+    markdown_block_lines = markdown_block.split("\n")
+    for markdown_block_line in markdown_block_lines:
+      markdown_parts = markdown_block_line.split(" ", 1)
+      if markdown_parts[0] == "#":
+        title = markdown_parts[1]
+        break
+    if title:
+      break
+  if not title:
+    raise Exception("There is not h1 header to extract title from")
+  return title
+
+def generate_page(from_path, template_path, dest_path):
+  print(f"Generating page from {from_path} to {dest_path} using {template_path}")
+  try:
+    with open(from_path, "r", encoding="utf-8") as markdown_file:
+      markdown = markdown_file.read()
+
+    with open(template_path, "r", encoding="utf-8") as template_file:
+      template = template_file.read()
+
+    markdown_html = markdown_to_html_node(markdown).to_html()
+    page_title = extract_title(markdown)
+
+    template = template.replace("{{ Title }}", page_title)
+    template = template.replace("{{ Content }}", markdown_html)
+
+    destination_dir = os.path.dirname(dest_path)
+    if destination_dir:
+      os.makedirs(destination_dir, exist_ok=True)
+
+    with open(dest_path, "w", encoding="utf-8") as dest_file:
+      dest_file.write(template)
+
+  except Exception as e:
+    print(f"Error: {e}")
+  
