@@ -227,9 +227,9 @@ def empty_public(public_dir: str) -> None:
     elif (os.path.isdir(item_path)):
       shutil.rmtree(item_path)
 
-def copy_static_to_public() -> None:
+def copy_static_to_docs() -> None:
   base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-  public_dir = os.path.join(base_dir, "public")
+  public_dir = os.path.join(base_dir, "docs")
   static_dir = os.path.join(base_dir, "static")
   empty_public(public_dir)
   def copy_static(static_items_list):
@@ -271,7 +271,7 @@ def extract_title(markdown: str) -> str:
     raise Exception("There is not h1 header to extract title from")
   return title
 
-def generate_page(from_path: str, template_path: str, dest_path: str) -> None:
+def generate_page(from_path: str, template_path: str, dest_path: str, basepath: str) -> None:
   print(f"Generating page from {from_path} to {dest_path} using {template_path}")
   try:
     with open(from_path, "r", encoding="utf-8") as markdown_file:
@@ -285,6 +285,8 @@ def generate_page(from_path: str, template_path: str, dest_path: str) -> None:
 
     template = template.replace("{{ Title }}", page_title)
     template = template.replace("{{ Content }}", markdown_html)
+    template = template.replace("href=\"/", f"href=\"{basepath}")
+    template = template.replace("src=\"/", f"src=\"{basepath}")
 
     destination_dir = os.path.dirname(dest_path)
     if destination_dir:
@@ -296,7 +298,7 @@ def generate_page(from_path: str, template_path: str, dest_path: str) -> None:
   except Exception as e:
     print(f"Error: {e}")
 
-def generate_pages_recursive(dir_path_content: str, template_path: str, dest_dir_path: str):
+def generate_pages_recursive(dir_path_content: str, template_path: str, dest_dir_path: str, basepath: str):
   content_dir_paths = os.listdir(dir_path_content)
   for content_dir_path in content_dir_paths:
     item_path = os.path.join(dir_path_content, content_dir_path)
@@ -304,7 +306,7 @@ def generate_pages_recursive(dir_path_content: str, template_path: str, dest_dir
       (root, ext) = os.path.splitext(content_dir_path)
       html_file_path = f"{root}.html"
       dest_item_path = os.path.join(dest_dir_path, html_file_path)
-      generate_page(item_path, template_path, dest_item_path)
+      generate_page(item_path, template_path, dest_item_path, basepath)
     else:
       dest_dir = os.path.join(dest_dir_path, content_dir_path)
-      generate_pages_recursive(item_path, template_path, dest_dir)
+      generate_pages_recursive(item_path, template_path, dest_dir, basepath)
